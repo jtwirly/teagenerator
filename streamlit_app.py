@@ -6,14 +6,15 @@ import json
 import os
 import re
 
-# Function to get OpenAI API key
-def get_openai_api_key():
-    api_key = os.getenv('OPENAI_API_KEY')
-    if not api_key:
-        api_key = st.sidebar.text_input("Enter your OpenAI API key", type="password")
-        if not api_key:
-            st.sidebar.warning("Please enter your OpenAI API key to use this app.")
-    return api_key
+# Get the OpenAI API key from the environment variable
+api_key = os.getenv('OPENAI_API_KEY')
+
+if not api_key:
+    st.error("No OpenAI API key found. Please set the OPENAI_API_KEY environment variable.")
+    st.stop()
+
+# Initialize the OpenAI client
+client = OpenAI(api_key=api_key)
 
 # Function to parse the OpenAI response
 def parse_openai_response(response_text):
