@@ -201,7 +201,7 @@ def generate_tea_report(client, business_idea, location, assumptions, variables,
 
     15. Recommendations:
         - Provide 3-5 key recommendations for improving the technology's economic viability or reducing risks.
-        - Suggest areas for further research or development.
+        - Suggest areas for further research and development.
 
     16. Executive Summary:
         - Summarize the key findings of your analysis.
@@ -239,50 +239,61 @@ def generate_tea_report(client, business_idea, location, assumptions, variables,
 # Streamlit app
 st.title("TEA Generator")
 
-business_idea = st.text_input("Enter your business idea/technology:")
-location = st.text_input("Enter the location:")
-unit_of_interest = st.selectbox("Select the unit of interest:", ["Product", "Process", "Operation"])
-assumptions = st.text_area("Enter key assumptions:")
-example_teas = st.text_area("Enter URLs of example TEA analyses:", value="""
-https://pubs.acs.org/doi/10.1021/acs.est.0c00476
-https://www.sciencedirect.com/science/article/pii/S2542435121003032
-https://pubs.rsc.org/en/content/articlehtml/2016/ee/c5ee02573g
-https://www.sandia.gov/research/publications/details/techno-economic-analysis-best-practices-and-assessment-tools-2020-12-01/
-""")
+# Use session state to store input values
+if 'business_idea' not in st.session_state:
+    st.session_state.business_idea = ""
+if 'location' not in st.session_state:
+    st.session_state.location = ""
+if 'unit_of_interest' not in st.session_state:
+    st.session_state.unit_of_interest = "Product"
+if 'assumptions' not in st.session_state:
+    st.session_state.assumptions = ""
+if 'example_teas' not in st.session_state:
+    st.session_state.example_teas = """
+    https://pubs.acs.org/doi/10.1021/acs.est.0c00476
+    https://www.sciencedirect.com/science/article/pii/S2542435121003032
+    https://pubs.rsc.org/en/content/articlehtml/2016/ee/c5ee02573g
+    https://www.sandia.gov/research/publications/details/techno-economic-analysis-best-practices-and-assessment-tools-2020-12-01/
+    """
 
-if business_idea and location:
-    if 'variables' not in st.session_state:
+# Input fields
+st.session_state.business_idea = st.text_input("Enter your business idea/technology:", value=st.session_state.business_idea)
+st.session_state.location = st.text_input("Enter the location:", value=st.session_state.location)
+st.session_state.unit_of_interest = st.selectbox("Select the unit of interest:", ["Product", "Process", "Operation"], index=["Product", "Process", "Operation"].index(st.session_state.unit_of_interest))
+st.session_state.assumptions = st.text_area("Enter key assumptions:", value=st.session_state.assumptions)
+st.session_state.example_teas = st.text_area("Enter URLs of example TEA analyses:", value=st.session_state.example_teas)
+
+if st.session_state.business_idea and st.session_state.location:
+    if 'variables' not in st.session_state or st.button("Regenerate Variables"):
         with st.spinner("Generating variables for analysis..."):
-            st.session_state.variables = generate_business_variables(client, business_idea, location, assumptions, example_teas)
+            st.session_state.variables = generate_business_variables(client, st.session_state.business_idea, st.session_state.location, st.session_state.assumptions, st.session_state.example_teas)
+    
+    if st.session_state.variables:
+        st.subheader("Adjust Key Variables for Sensitivity Analysis")
+        values = []
+        for var in st.session_state.variables:
+            value = st.slider(
+                var['name'], 
+                min_value=float(var['min']),
+                max_value=float(var['max']),
+                value=float(var['default']),
+                step=float(var['step'])
+            )
+            values.append(value)
         
-        if st.session_state.variables:
-            st.subheader("Adjust Key Variables for Sensitivity Analysis")
-            values = []
-            for var in st.session_state.variables:
-                value = st.slider(
-                    var['name'], 
-                    min_value=float(var['min']),
-                    max_value=float(var['max']),
-                    value=float(var['default']),
-                    step=float(var['step'])
-                )
-                values.append(value)
+        if values:
+            st.subheader("Tornado Chart: Sensitivity Analysis")
+            fig = plot_tornado_chart([var['name'] for var in st.session_state.variables], values)
+            st.pyplot(fig)
             
-            if values:
-                st.subheader("Tornado Chart: Sensitivity Analysis")
-                fig = plot_tornado_chart([var['name'] for var in st.session_state.variables], values)
-                st.pyplot(fig)
-                
-                if st.button("Generate Comprehensive TEA Report"):
-                    with st.spinner("Generating TEA report... This may take a few minutes."):
-                        tea_report = generate_tea_report(client, business_idea, location, assumptions, 
-                                                        [var['name'] for var in st.session_state.variables], 
-                                                        values, example_teas, unit_of_interest)
-                        st.markdown("## Techno-Economic Analysis Report")
-                        st.markdown(tea_report)
-        else:
-            st.error("Failed to generate variables. Please try again or refine your business idea.")
+            if st.button("Generate Comprehensive TEA Report"):
+                with st.spinner("Generating TEA report... This may take a few minutes."):
+                    tea_report = generate_tea_report(client, st.session_state.business_idea, st.session_state.location, st.session_state.assumptions, 
+                                                    [var['name'] for var in st.session_state.variables], 
+                                                    values, st.session_state.example_teas, st.session_state.unit_of_interest)
+                    st.markdown("## Techno-Economic Analysis Report")
+                    st.markdown(tea_report)
     else:
-        st.info("Please enter your business idea/technology and location to begin the analysis.")
+        st.error("Failed to generate variables. Please try again or refine your business idea.")
 else:
-    st.warning("Please provide an OpenAI API key to use this app.")
+    st.info("Please enter your business idea/technology and location to begin the analysis.")
