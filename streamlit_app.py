@@ -239,12 +239,6 @@ def generate_tea_report(client, business_idea, location, assumptions, variables,
 # Streamlit app
 st.title("TEA Generator")
 
-# Get OpenAI API key
-api_key = get_openai_api_key()
-
-if api_key:
-    client = OpenAI(api_key=api_key)
-
     # Main app
     business_idea = st.text_input("Enter your business idea/technology:")
     location = st.text_input("Enter the location:")
