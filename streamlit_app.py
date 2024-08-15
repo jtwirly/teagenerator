@@ -239,22 +239,21 @@ def generate_tea_report(client, business_idea, location, assumptions, variables,
 # Streamlit app
 st.title("TEA Generator")
 
-    # Main app
-    business_idea = st.text_input("Enter your business idea/technology:")
-    location = st.text_input("Enter the location:")
-    unit_of_interest = st.selectbox("Select the unit of interest:", ["Product", "Process", "Operation"])
-    assumptions = st.text_area("Enter key assumptions:")
-    example_teas = st.text_area("Enter URLs of example TEA analyses:", value="""
-    https://pubs.acs.org/doi/10.1021/acs.est.0c00476
-    https://www.sciencedirect.com/science/article/pii/S2542435121003032
-    https://pubs.rsc.org/en/content/articlehtml/2016/ee/c5ee02573g
-    https://www.sandia.gov/research/publications/details/techno-economic-analysis-best-practices-and-assessment-tools-2020-12-01/
-    """)
+business_idea = st.text_input("Enter your business idea/technology:")
+location = st.text_input("Enter the location:")
+unit_of_interest = st.selectbox("Select the unit of interest:", ["Product", "Process", "Operation"])
+assumptions = st.text_area("Enter key assumptions:")
+example_teas = st.text_area("Enter URLs of example TEA analyses:", value="""
+https://pubs.acs.org/doi/10.1021/acs.est.0c00476
+https://www.sciencedirect.com/science/article/pii/S2542435121003032
+https://pubs.rsc.org/en/content/articlehtml/2016/ee/c5ee02573g
+https://www.sandia.gov/research/publications/details/techno-economic-analysis-best-practices-and-assessment-tools-2020-12-01/
+""")
 
-    if business_idea and location:
-        if 'variables' not in st.session_state:
-            with st.spinner("Generating variables for analysis..."):
-                st.session_state.variables = generate_business_variables(client, business_idea, location, assumptions, example_teas)
+if business_idea and location:
+    if 'variables' not in st.session_state:
+        with st.spinner("Generating variables for analysis..."):
+            st.session_state.variables = generate_business_variables(client, business_idea, location, assumptions, example_teas)
         
         if st.session_state.variables:
             st.subheader("Adjust Key Variables for Sensitivity Analysis")
